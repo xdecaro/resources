@@ -30,6 +30,11 @@ jobs:
         run: |
           find component package tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
           php tests/core-integration-smoke.php
+          test -f component/xdecaroresources.xml
+          test -f package/pkg_xdecaroresources.xml
+          grep -Fq 'xdecaro\Component\Resources' component/xdecaroresources.xml
+          grep -Fq '#__xdecaroresources_' component/admin/sql/install.mysql.utf8mb4.sql
+          ! grep -RIn 'Xdecaro\\' component package build tests updates README.md
           chmod +x build/build.sh
           build/build.sh
           cp dist/SHA256SUMS.txt /tmp/sums
@@ -40,14 +45,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "v${VERSION}" dist/com_decaroresources_${VERSION}.zip dist/pkg_decaroresources_${VERSION}.zip dist/SHA256SUMS.txt --prerelease --title "Resources by xdecaro ${VERSION}" --notes "First Core-first Resources technical baseline. Resources owns reusable allocatable resource definitions and capacity metadata; Bookings owns reservation state and Inventory owns stock."
+          gh release create "v${VERSION}" dist/com_xdecaroresources_${VERSION}.zip dist/pkg_xdecaroresources_${VERSION}.zip dist/SHA256SUMS.txt --prerelease --title "Resources by xdecaro ${VERSION}" --notes "Fresh prerelease technical baseline using com_xdecaroresources, pkg_xdecaroresources, xdecaro\\Component\\Resources and #__xdecaroresources_*; Resources owns reusable allocatable resource definitions and capacity metadata."
       - name: Publish package checksum
         run: |
-          export PACKAGE_SHA="$(sha256sum "dist/pkg_decaroresources_${VERSION}.zip" | awk '{print $1}')"
+          export PACKAGE_SHA="$(sha256sum "dist/pkg_xdecaroresources_${VERSION}.zip" | awk '{print $1}')"
           python3 - <<'PY'
           import os,re
           from pathlib import Path
-          p=Path('updates/pkg_decaroresources.xml')
+          p=Path('updates/pkg_xdecaroresources.xml')
           t=p.read_text()
           t=re.sub(r'<sha256>[^<]*</sha256>','',t)
           t=t.replace('</downloads>',f'</downloads><sha256>{os.environ["PACKAGE_SHA"]}</sha256>',1)
@@ -55,6 +60,6 @@ jobs:
           PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add updates/pkg_decaroresources.xml
+          git add updates/pkg_xdecaroresources.xml
           git diff --cached --quiet || git commit -m "Publish SHA-256 for Resources ${VERSION}"
           git push
