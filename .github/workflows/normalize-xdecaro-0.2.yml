@@ -1,11 +1,14 @@
-name: Normalize Resources 0.2.0 Identity
+name: Normalize Resources lowercase vendor
+
 on:
   push:
     branches: [main]
     paths: ['.github/workflows/normalize-xdecaro-0.2.yml']
   workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   normalize:
     runs-on: ubuntu-latest
@@ -14,7 +17,8 @@ jobs:
         with:
           ref: normalize-xdecaro-0.2.0
           fetch-depth: 0
-      - run: python3 tools/normalize_identity.py
+      - name: Normalize vendor namespace
+        run: python3 tools/lowercase_vendor_namespace.py
       - name: Validate
         run: |
           set -euo pipefail
@@ -28,13 +32,15 @@ jobs:
           test "$(cat VERSION)" = '0.2.0'
           test -f component/xdecaroresources.xml
           test -f package/pkg_xdecaroresources.xml
-          grep -Fq 'Xdecaro\Component\Resources' component/xdecaroresources.xml
+          grep -Fq 'xdecaro\Component\Resources' component/xdecaroresources.xml
           grep -Fq '#__xdecaroresources_' component/admin/sql/install.mysql.utf8mb4.sql
+          ! grep -RIn 'Xdecaro\\' component package build tests updates README.md
       - name: Commit branch
         run: |
-          rm tools/normalize_identity.py
+          set -euo pipefail
+          rm tools/lowercase_vendor_namespace.py
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'Normalize Resources 0.2.0 to xdecaro identity'
+          git commit -m 'Normalize Resources vendor namespace to lowercase xdecaro'
           git push origin HEAD:normalize-xdecaro-0.2.0
